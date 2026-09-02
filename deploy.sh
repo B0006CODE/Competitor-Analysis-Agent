@@ -19,7 +19,7 @@ IMAGE_NAME="competitive-analysis-agent:latest"
 TAR_FILE="competitive-analysis-agent.tar"
 PORT="${PORT:-8000}"
 DATA_VOLUME="${DATA_VOLUME:-analysis-data}"
-VERSION="${VERSION:-v1.5.5}"
+VERSION="${VERSION:-v1.5.8}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -41,7 +41,20 @@ if [ -f "$TAR_FILE" ]; then
         docker load -i "$TAR_FILE"
     fi
 else
-    err "找不到 $TAR_FILE，请先上传镜像包到本目录"
+    # 兼容版本化命名的镜像包（如 competitive-analysis-agent-v1.5.8.tar）
+    ALT_TAR="$(ls -t "$SCRIPT_DIR"/competitive-analysis-agent-v*.tar 2>/dev/null | head -1 || true)"
+    if [ -n "$ALT_TAR" ] && [ -f "$ALT_TAR" ]; then
+        TAR_FILE="$ALT_TAR"
+        info "未找到 $TAR_FILE，使用版本化镜像包: $TAR_FILE"
+        if docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+            info "镜像 $IMAGE_NAME 已存在，跳过加载"
+        else
+            info "加载镜像 $TAR_FILE ..."
+            docker load -i "$TAR_FILE"
+        fi
+    else
+        err "找不到 $TAR_FILE，请先上传镜像包到本目录"
+    fi
 fi
 
 # ---------- 3. 检查 .env 配置 ----------
