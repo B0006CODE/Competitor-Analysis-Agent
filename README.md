@@ -1,4 +1,4 @@
-# 竞品分析 Agent v1.5.8 - Docker 部署包（镜像仓库）
+# 竞品分析 Agent v1.5.9 - Docker 部署包（镜像仓库）
 
 本项目提供两种部署方式：
 
@@ -13,7 +13,7 @@
 
 ```
 Competitor-Analysis-Agent/
-├── competitive-analysis-agent-v1.5.8.tar   # Docker 镜像包（docker save 导出，Git LFS 存储）
+├── competitive-analysis-agent-v1.5.9.tar   # Docker 镜像包（docker save 导出，Git LFS 存储）
 ├── deploy.sh                               # 一键部署脚本
 ├── .env.example                            # 环境变量配置模板
 └── README.md                               # 本说明文档
@@ -39,7 +39,7 @@ git clone https://github.com/B0006CODE/Competitor-Analysis-Agent.git
 cd Competitor-Analysis-Agent
 
 # 4. 校验：tar 应约为 176MB；若只有 134 字节，执行 git lfs pull 补拉
-ls -lh competitive-analysis-agent-v1.5.8.tar
+ls -lh competitive-analysis-agent-v1.5.9.tar
 git lfs pull
 ```
 
@@ -48,9 +48,9 @@ git lfs pull
 浏览器或命令行任选其一（两者等价，均为 LFS 真实内容）：
 
 ```bash
-# GitHub 页面：进入仓库 → 点击 competitive-analysis-agent-v1.5.8.tar → 右上「下载原始文件」
+# GitHub 页面：进入仓库 → 点击 competitive-analysis-agent-v1.5.9.tar → 右上「下载原始文件」
 # 或命令行直链下载：
-wget https://media.githubusercontent.com/media/B0006CODE/Competitor-Analysis-Agent/main/competitive-analysis-agent-v1.5.8.tar
+wget https://media.githubusercontent.com/media/B0006CODE/Competitor-Analysis-Agent/main/competitive-analysis-agent-v1.5.9.tar
 ```
 
 > 无论哪种方式，请把 deploy.sh、.env.example 一并下载（README 页面 → 右上「下载原始文件」），
@@ -78,7 +78,7 @@ bash deploy.sh
 
 ```bash
 # 1. 加载镜像
-docker load -i competitive-analysis-agent-v1.5.8.tar
+docker load -i competitive-analysis-agent-v1.5.9.tar
 
 # 2. 创建 .env 配置文件（参照 .env.example，必填 LLM_API_KEY、TAVILY_API_KEY）
 
@@ -120,7 +120,7 @@ bash deploy.sh                       # 本机已有镜像时自动跳过加载�
 | `BOCHA_API_KEY` | 否 | 博查搜索 Key（https://bocha-ai.feishu.cn/wiki/RXEOw02rFiwzGSkd9mUcqoeAnNK） |
 | `SEARCH_PROVIDER` | 否 | 服务端搜索回退策略：auto/tavily/bocha/zhihu/zhihu_site/zhida，默认 auto |
 | `FRONTEND_ORIGIN` | 否 | 前端访问地址，deploy.sh 会自动补齐，如 `http://<IP>:8000` |
-| `APP_VERSION` | 否 | 版本号，默认 v1.5.8 |
+| `APP_VERSION` | 否 | 版本号，默认 v1.5.9 |
 | `APP_ENV` | 否 | auto/test/staging/prod，默认 auto（按 APP_VERSION 自动推断） |
 
 ## 常用命令
@@ -139,8 +139,8 @@ docker rm -f competitive-analysis     # 删除容器（数据卷 analysis-data �
 
 ## 版本信息
 
-- 版本号：v1.5.8（2026-09-02）
+- 版本号：v1.5.9（2026-09-02）
 - 镜像标签：`competitive-analysis-agent:latest`
 - 主要功能：竞品分析 Agent（LLM + 多来源搜索：Tavily / 知乎 / 博查），Web 界面 + REST API
-- 本版主要变更：知乎直答报告显示修复（来源/引用不再塌缩；未完成来源显示占位提示）
+- 本版主要变更：修复报告弹窗四个来源标签被拉伸成竖条的问题（点开均为「标签胶囊行 + 目录/报告内部滚动」正常形态）
 - 变更记录详见源码仓库 CHANGELOG.md
