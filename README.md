@@ -1,39 +1,80 @@
-# 竞品分析 Agent v1.5.8 - Docker 部署包
+# 竞品分析 Agent v1.5.8 - Docker 部署包（镜像仓库）
 
-## 包内容
+本项目提供两种部署方式：
+
+| 方式 | 仓库 | 适用场景 |
+|------|------|----------|
+| **方式一：镜像包直接部署**（本仓库） | `Competitor-Analysis-Agent` | 只想快速上线，不需要改代码。无需编译环境，加载镜像即可运行 |
+| **方式二：源码构建部署** | [Competitor-Analysis-Agent-src](https://github.com/B0006CODE/Competitor-Analysis-Agent-src) | 需要二次开发、审计源码。需自行 `docker build`（3-10 分钟） |
+
+两个仓库内容一致（同一版本发布），按需二选一即可。
+
+## 包内容（本仓库）
 
 ```
-competitive-analysis-agent-v1.5.8/
-├── competitive-analysis-agent-v1.5.8.tar   # Docker 镜像包（docker save 导出）
+Competitor-Analysis-Agent/
+├── competitive-analysis-agent-v1.5.8.tar   # Docker 镜像包（docker save 导出，Git LFS 存储）
 ├── deploy.sh                               # 一键部署脚本
 ├── .env.example                            # 环境变量配置模板
 └── README.md                               # 本说明文档
 ```
 
-## 系统要求
+## 一、拉取本仓库
 
-- Linux 服务器（x86_64 / ARM64 均可）
-- Docker 已安装并运行（未安装：`curl -fsSL https://get.docker.com | sh`）
-- 服务器可访问外网（调用 LLM API、搜索 API）
-- 建议 2 核 4G 以上
+> **重要**：镜像 tar 包（约 176MB）通过 Git LFS 存储。克隆前必须先安装 git-lfs，
+> 否则拉下来的 tar 只有 134 字节（LFS 指针文件），无法 docker load。
 
-## 快速部署（推荐）
+### 方式 A：git clone（推荐）
 
 ```bash
-# 1. 上传整个文件夹到服务器，进入目录
-cd competitive-analysis-agent-v1.5.8
+# 1. 安装 git-lfs（已安装可跳过）
+apt-get install -y git-lfs        # Debian / Ubuntu
+yum install -y git-lfs            # CentOS / RHEL
+
+# 2. 初始化 LFS（每台机器只需执行一次）
+git lfs install
+
+# 3. 克隆仓库（自动下载 LFS 大文件）
+git clone https://github.com/B0006CODE/Competitor-Analysis-Agent.git
+cd Competitor-Analysis-Agent
+
+# 4. 校验：tar 应约为 176MB；若只有 134 字节，执行 git lfs pull 补拉
+ls -lh competitive-analysis-agent-v1.5.8.tar
+git lfs pull
+```
+
+### 方式 B：不装 git，直接下载镜像包
+
+浏览器或命令行任选其一（两者等价，均为 LFS 真实内容）：
+
+```bash
+# GitHub 页面：进入仓库 → 点击 competitive-analysis-agent-v1.5.8.tar → 右上「下载原始文件」
+# 或命令行直链下载：
+wget https://media.githubusercontent.com/media/B0006CODE/Competitor-Analysis-Agent/main/competitive-analysis-agent-v1.5.8.tar
+```
+
+> 无论哪种方式，请把 deploy.sh、.env.example 一并下载（README 页面 → 右上「下载原始文件」），
+> 与 tar 放在同一目录。
+
+## 二、方式一：镜像包部署（本仓库，推荐）
+
+### 快速部署
+
+```bash
+# 1. 进入仓库目录（tar / deploy.sh / .env.example 需在同一目录）
+cd Competitor-Analysis-Agent
 
 # 2. 复制配置模板并填入真实密钥
 cp .env.example .env
 vi .env    # 必填: LLM_API_KEY, TAVILY_API_KEY（可选: ZHIHU_API_KEY, BOCHA_API_KEY）
 
-# 3. 一键部署（自动加载镜像、启动容器、健康检查）
+# 3. 一键部署（自动探测版本化镜像包并加载、启动容器、健康检查）
 bash deploy.sh
 ```
 
 部署完成后访问：`http://<服务器IP>:8000`
 
-## 手动部署
+### 手动部署
 
 ```bash
 # 1. 加载镜像
@@ -50,6 +91,22 @@ docker run -d \
     -v analysis-data:/data \
     competitive-analysis-agent:latest
 ```
+
+## 三、方式二：源码构建部署
+
+如果需要修改代码，请拉取源码仓库并构建镜像：
+
+```bash
+git lfs install                      # 源码仓库无 LFS 大文件，不装 git-lfs 也可
+git clone https://github.com/B0006CODE/Competitor-Analysis-Agent-src.git
+cd Competitor-Analysis-Agent-src
+
+cp .env.example .env && vi .env      # 先配置密钥
+docker build -t competitive-analysis-agent:latest .
+bash deploy.sh                       # 本机已有镜像时自动跳过加载，直接启动
+```
+
+完整说明（本地运行、验证、常见问题）见源码仓库 README。
 
 ## 环境变量说明
 
@@ -77,7 +134,7 @@ docker rm -f competitive-analysis     # 删除容器（数据卷 analysis-data �
 
 ## 更新版本
 
-1. 用新镜像包替换 `competitive-analysis-agent-v1.5.8.tar`
+1. `git pull`（或重新下载新版本的 tar 包替换旧文件）
 2. 重新执行 `bash deploy.sh`（自动停止旧容器并启动新容器，数据保留在 volume 中）
 
 ## 版本信息
@@ -85,4 +142,5 @@ docker rm -f competitive-analysis     # 删除容器（数据卷 analysis-data �
 - 版本号：v1.5.8（2026-09-02）
 - 镜像标签：`competitive-analysis-agent:latest`
 - 主要功能：竞品分析 Agent（LLM + 多来源搜索：Tavily / 知乎 / 博查），Web 界面 + REST API
-- 变更记录详见项目 CHANGELOG.md
+- 本版主要变更：知乎直答报告显示修复（来源/引用不再塌缩；未完成来源显示占位提示）
+- 变更记录详见源码仓库 CHANGELOG.md

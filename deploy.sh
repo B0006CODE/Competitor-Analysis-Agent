@@ -32,28 +32,25 @@ err()  { echo -e "\033[31m[ERROR]\033[0m $*"; exit 1; }
 command -v docker >/dev/null 2>&1 || err "未检测到 docker，请先安装: curl -fsSL https://get.docker.com | sh"
 docker info >/dev/null 2>&1 || err "docker 未运行或当前用户无权限（试试 sudo 或加入 docker 组）"
 
-# ---------- 2. 加载镜像 ----------
-if [ -f "$TAR_FILE" ]; then
-    if docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
-        info "镜像 $IMAGE_NAME 已存在，跳过加载"
-    else
-        info "加载镜像 $TAR_FILE ..."
-        docker load -i "$TAR_FILE"
-    fi
+# ---------- 2. 加载镜像（镜像已存在则跳过；无通用命名 tar 时探测版本化命名 tar） ----------
+if docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+    info "镜像 $IMAGE_NAME 已存在，跳过加载"
 else
-    # 兼容版本化命名的镜像包（如 competitive-analysis-agent-v1.5.8.tar）
-    ALT_TAR="$(ls -t "$SCRIPT_DIR"/competitive-analysis-agent-v*.tar 2>/dev/null | head -1 || true)"
-    if [ -n "$ALT_TAR" ] && [ -f "$ALT_TAR" ]; then
-        TAR_FILE="$ALT_TAR"
-        info "未找到 $TAR_FILE，使用版本化镜像包: $TAR_FILE"
-        if docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
-            info "镜像 $IMAGE_NAME 已存在，跳过加载"
-        else
-            info "加载镜像 $TAR_FILE ..."
-            docker load -i "$TAR_FILE"
-        fi
+    TAR_FILE_RESOLVED=""
+    if [ -f "$TAR_FILE" ]; then
+        TAR_FILE_RESOLVED="$TAR_FILE"
     else
-        err "找不到 $TAR_FILE，请先上传镜像包到本目录"
+        ALT_TAR="$(ls -t "$SCRIPT_DIR"/competitive-analysis-agent-v*.tar 2>/dev/null | head -1 || true)"
+        if [ -n "$ALT_TAR" ] && [ -f "$ALT_TAR" ]; then
+            TAR_FILE_RESOLVED="$ALT_TAR"
+            info "未找到 $TAR_FILE，使用版本化镜像包: $TAR_FILE_RESOLVED"
+        fi
+    fi
+    if [ -n "$TAR_FILE_RESOLVED" ]; then
+        info "加载镜像 $TAR_FILE_RESOLVED ..."
+        docker load -i "$TAR_FILE_RESOLVED"
+    else
+        err "找不到镜像包 $TAR_FILE，且本机没有镜像 $IMAGE_NAME；请先上传镜像包到本目录，或执行 docker build 构建镜像"
     fi
 fi
 
